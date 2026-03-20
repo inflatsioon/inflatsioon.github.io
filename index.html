@@ -260,6 +260,103 @@ color: rgba(100, 140, 255, 0.5);
 text-decoration: none;
 }
 
+.table-section {
+margin-top: 32px;
+}
+
+.table-toggle {
+display: flex;
+align-items: center;
+gap: 8px;
+background: none;
+border: 1px solid rgba(255,255,255,0.08);
+border-radius: 12px;
+padding: 12px 18px;
+color: rgba(255,255,255,0.5);
+font-family: ‘DM Sans’, sans-serif;
+font-size: 0.8rem;
+font-weight: 600;
+cursor: pointer;
+width: 100%;
+transition: border-color 0.25s, color 0.25s;
+}
+.table-toggle:hover {
+border-color: rgba(255,255,255,0.15);
+color: rgba(255,255,255,0.7);
+}
+.table-toggle .arrow {
+transition: transform 0.3s ease;
+font-size: 0.65rem;
+margin-left: auto;
+}
+.table-toggle.open .arrow {
+transform: rotate(180deg);
+}
+
+.table-content {
+max-height: 0;
+overflow: hidden;
+transition: max-height 0.5s ease;
+}
+.table-content.open {
+max-height: 600px;
+}
+
+.inflation-table {
+width: 100%;
+border-collapse: collapse;
+margin-top: 16px;
+font-size: 0.78rem;
+}
+
+.inflation-table thead th {
+font-size: 0.65rem;
+font-weight: 700;
+text-transform: uppercase;
+letter-spacing: 0.1em;
+color: rgba(255,255,255,0.3);
+text-align: left;
+padding: 8px 6px;
+border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.inflation-table thead th:not(:first-child) {
+text-align: right;
+}
+
+.inflation-table tbody td {
+padding: 7px 6px;
+border-bottom: 1px solid rgba(255,255,255,0.03);
+color: rgba(255,255,255,0.55);
+font-weight: 500;
+font-variant-numeric: tabular-nums;
+}
+.inflation-table tbody td:not(:first-child) {
+text-align: right;
+}
+
+.inflation-table tbody td.year-cell {
+color: rgba(255,255,255,0.7);
+font-weight: 700;
+}
+
+.inflation-table tbody td.rate-negative {
+color: #5ec4a0;
+}
+.inflation-table tbody td.rate-high {
+color: #e8564a;
+}
+.inflation-table tbody td.cumulative-cell {
+color: rgba(255,255,255,0.7);
+font-weight: 600;
+}
+
+.table-note {
+margin-top: 10px;
+font-size: 0.65rem;
+color: rgba(255,255,255,0.18);
+line-height: 1.5;
+}
+
 @media (max-width: 500px) {
 .card { padding: 28px 20px 28px; }
 h1 { font-size: 1.35rem; }
@@ -336,6 +433,31 @@ h1 { font-size: 1.35rem; }
 ```
 
   </div>
+
+  <div class="table-section">
+    <button class="table-toggle" id="tableToggle" onclick="toggleTable()">
+      Arvutuskäigu alus — aastased inflatsioonimäärad
+      <span class="arrow">▼</span>
+    </button>
+    <div class="table-content" id="tableContent">
+      <table class="inflation-table">
+        <thead>
+          <tr>
+            <th>Aasta</th>
+            <th>Inflatsioon</th>
+            <th>Kumulatiivne</th>
+          </tr>
+        </thead>
+        <tbody id="ratesTableBody">
+        </tbody>
+      </table>
+      <div class="table-note">
+        THI = tarbijahinnaindeks (CPI). Aastamäärad põhinevad Maailmapanga ja Macrotrends andmetel.
+        <br>2026 näitab hinnangulist inflatsiooni jaanuar–märts 2026 (~3,4% aastases tempos).
+        <br>Kumulatiivne inflatsioon näitab, kui palju on hinnad kokku tõusnud alates 2015. aastast.
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -398,6 +520,38 @@ h1 { font-size: 1.35rem; }
 
     resultsEl.classList.add('visible');
   }
+
+  function toggleTable() {
+    const btn = document.getElementById('tableToggle');
+    const content = document.getElementById('tableContent');
+    btn.classList.toggle('open');
+    content.classList.toggle('open');
+  }
+
+  function buildTable() {
+    const years = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026];
+    const labels = {
+      2026: '2026 (jan–märts)'
+    };
+    let cumulative = 1;
+    let html = '';
+    for (const y of years) {
+      const r = rates[y];
+      cumulative *= (1 + r);
+      const pct = (r * 100).toFixed(1);
+      const cumPct = ((cumulative - 1) * 100).toFixed(1);
+      const rateClass = r < 0 ? 'rate-negative' : r >= 0.05 ? 'rate-high' : '';
+      const label = labels[y] || y;
+      html += '<tr>';
+      html += '<td class="year-cell">' + label + '</td>';
+      html += '<td class="' + rateClass + '">' + (r >= 0 ? '+' : '') + pct + '%</td>';
+      html += '<td class="cumulative-cell">+' + cumPct + '%</td>';
+      html += '</tr>';
+    }
+    document.getElementById('ratesTableBody').innerHTML = html;
+  }
+
+  buildTable();
 </script>
 
  <script data-goatcounter="https://inflatsioon.goatcounter.com/count"
